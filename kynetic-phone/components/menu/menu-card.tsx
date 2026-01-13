@@ -20,6 +20,20 @@ function getWeatherIcon(data: any) {
   return "clear";
 }
 
+function getClubSymbol(clubLogo: any, clubName: string) {
+  if (clubLogo != null) return clubLogo;
+  if (clubName.length <= 10) return clubName;
+  
+  const cleanName = clubName.replace(/[^a-zA-Z\s]/g, "");
+
+  return cleanName
+    .split(/\s+/)
+    .filter(word => word.length > 0)
+    .map(word => word[0].toUpperCase())
+    .join("");   
+
+}
+
 const WEATHER_ICONS: Record<string, any> = {
   clear: require("@/assets/weather/clear.png"),
   "partly-cloudy": require("@/assets/weather/partly-cloudy.png"),
@@ -29,22 +43,28 @@ const WEATHER_ICONS: Record<string, any> = {
   cold: require("@/assets/weather/cold.png"),
 };
 
+const SPORT_ICONS: Record<string, any> = {
+  golf: require("@/assets/images/avatar/golf.png"),
+  tennis: require("@/assets/images/avatar/tennis.png"),
+};
+
 export default function MenuCard({ data }: any) {
   const weatherKey = getWeatherIcon(data);
   const weatherIcon = WEATHER_ICONS[weatherKey];
+
+  const golfIcon = SPORT_ICONS[data.sportName?.toLowerCase()]
 
   return (
     <View style={styles.card}>
       {/* Club */}
       <View style={[styles.section, styles.clubSection]}>
-        <Text style={styles.clubText}>{data.clubName}</Text>
+        <Text style={styles.clubText}>{getClubSymbol(data.clubLogo, data.clubName)}</Text>
       </View>
 
       {/* Sport Specific */}
-      {/* <View style={styles.section}> */}
-        {/* <Image source={data.avatarPath} style={styles.metricsSection} /> */}
-        {/* <Text style={styles.tempText}>{data.temperature}</Text> */}
-      {/* </View> */}
+      <View style={styles.section}>
+        <Image source={golfIcon} style={styles.weatherIcon} />
+      </View>
 
       {/* Weather */}
       <View style={styles.section}>
@@ -81,9 +101,9 @@ const styles = StyleSheet.create({
     borderRightColor: "#eee",
   },
   clubSection: {
-    flex: 1.5,
+    flex: 0.8,
     alignItems: "flex-start",
-    paddingRight: 8,
+    // paddingRight: 8,
   },
   metricsSection: {
     borderRightWidth: 0,
