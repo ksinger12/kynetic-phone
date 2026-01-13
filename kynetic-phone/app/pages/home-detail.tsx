@@ -1,33 +1,19 @@
+import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScrollView, Text, StyleSheet } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import MenuBarModal from "@/components/menu/menu-bar-modal";
+import { fetchMenuBarData } from "@/api/home-api";
+import { MenuBarItem } from "@/api/types/menu";
 
 export default function HomeDetailScreen() {
-  const params = useLocalSearchParams();
+  const [data, setData] = useState<MenuBarItem[]>([]);
+
+  useEffect(() => {
+    fetchMenuBarData("1").then(setData);
+  }, []);
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Home Data</Text>
-        <Text selectable style={styles.json}>
-          {JSON.stringify(params, null, 2)}
-        </Text>
-      </ScrollView>
+    <SafeAreaView style={{ flex: 1 }}>
+      <MenuBarModal data={data} visible />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  json: {
-    fontFamily: "Courier",
-    fontSize: 14,
-  },
-});
