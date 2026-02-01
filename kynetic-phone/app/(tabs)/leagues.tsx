@@ -14,15 +14,35 @@ function LeagueCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <View>
-        <Text style={styles.leagueName}>{league.leagueName}</Text>
-        <Text style={styles.subText}>{league.clubName}</Text>
-        <Text style={styles.sportText}>{league.sportName}</Text>
+    <Pressable onPress={onPress} style={({ pressed }) => [
+      styles.card,
+      pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+    ]}>
+
+      {/* Accent bar */}
+      <View style={styles.accentBar} />
+
+      <View style={styles.cardContent}>
+        <View style={styles.headerRow}>
+          <Text style={styles.leagueName}>{league.leagueName}</Text>
+          <Text style={styles.chevron}>›</Text>
+        </View>
+
+        <Text style={styles.clubName}>{league.clubName}</Text>
+
+        <View style={styles.metaRow}>
+          <View style={styles.sportBadge}>
+            <Text style={styles.sportText}>{league.sportName}</Text>
+          </View>
+
+          {/* future: members */}
+          {/* <Text style={styles.metaText}>83 members</Text> */}
+        </View>
       </View>
     </Pressable>
   );
 }
+
 
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -77,30 +97,80 @@ const styles = StyleSheet.create({
   list: {
     padding: 16,
   },
+
   card: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    borderRadius: 18,
+    marginBottom: 14,
+    flexDirection: "row",
+    overflow: "hidden",
+
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+
+    // Android shadow
     elevation: 3,
   },
+
+  accentBar: {
+    width: 6,
+    backgroundColor: "#1E3A8A", // sports navy
+  },
+
+  cardContent: {
+    flex: 1,
+    padding: 16,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
   leagueName: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 16.5,
+    fontWeight: "700",
+    color: "#111",
   },
-  subText: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 2,
+
+  chevron: {
+    fontSize: 22,
+    color: "#999",
+    marginLeft: 8,
   },
+
+  clubName: {
+    fontSize: 13.5,
+    color: "#555",
+    marginTop: 4,
+  },
+
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  sportBadge: {
+    backgroundColor: "#EEF2FF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+
   sportText: {
     fontSize: 12,
-    color: "#007AFF",
-    marginTop: 6,
+    fontWeight: "600",
+    color: "#1E40AF",
   },
+
   joinButton: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#007AFF",
+    color: "#2563EB",
   },
 });

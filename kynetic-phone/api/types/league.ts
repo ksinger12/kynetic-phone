@@ -1,9 +1,9 @@
 export interface League {
-    clubId: Number;
-    clubName: String;
-    leagueId: Number;
-    leagueName: String;
-    leagueComment: String;
-    sportId: Number;
-    sportName: String;
+  clubId: number;
+  clubName: string;
+  leagueId: number;
+  leagueName: string;
+  leagueComment: string;
+  sportId: number;
+  sportName: string;
 }
