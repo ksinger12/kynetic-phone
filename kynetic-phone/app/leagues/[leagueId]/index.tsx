@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -14,13 +14,15 @@ import { RoundLeaderboard } from "@/api/types/roundLeaderboard";
 import { Team } from "@/api/types/team";
 
 export default function LeagueDetailScreen() {
+
     const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
     const router = useRouter();
+    const navigation = useNavigation();
 
     const USER_ID = "1"; // temporary hardcoded
 
     const [league, setLeague] = useState<League | null>(null);
-    const [weeklyGame, setWeeklyGame] = useState<RoundLeaderboard | null>(null);
+    const [roundLeaderboard, setRoundLeaderboard] = useState<RoundLeaderboard | null>(null);
     const [leaderboard, setLeaderboard] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,11 +42,12 @@ export default function LeagueDetailScreen() {
                 ]);
 
                 setLeague(leagueRes);
-                setWeeklyGame(roundBoard);
+                setRoundLeaderboard(roundBoard);
                 setLeaderboard(leaderboardRes);
             } catch (e) {
-                console.error("League load failed:", e);
-                setError("Failed to load league data");
+                console.warn("Partial league load failed:", e);
+                // console.error("League load failed:", e);
+                // setError("Failed to load league data");
             } finally {
                 setLoading(false);
             }
@@ -52,6 +55,13 @@ export default function LeagueDetailScreen() {
 
         loadData();
     }, [leagueId]);
+
+    useEffect(() => {
+        navigation.setOptions({
+            title: league?.leagueName ?? "League",
+        });
+    }, [navigation, league]);
+
 
     // ✅ Loading state (no blank screen anymore)
     if (loading) {
@@ -63,11 +73,19 @@ export default function LeagueDetailScreen() {
         );
     }
 
-    // ✅ Error state
-    if (error || !league) {
+    if (!leagueId || !league) {
         return (
             <SafeAreaView style={styles.center}>
-                <Text>{error ?? "League not found"}</Text>
+                <Text>Invalid league</Text>
+            </SafeAreaView>
+        );
+    }
+
+    // ✅ Error state
+    if (!league) {
+        return (
+            <SafeAreaView style={styles.center}>
+                <Text>League not found</Text>
             </SafeAreaView>
         );
     }
@@ -76,20 +94,26 @@ export default function LeagueDetailScreen() {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.title}>{league.leagueName}</Text>
-                <Text style={styles.subtitle}>{league.clubName}</Text>
+                <Text style={styles.title}>
+                    {league?.leagueName ?? "League"}
+                </Text>
+                <Text style={styles.subtitle}>
+                    {league?.clubName ?? " "}
+                </Text>
             </View>
 
             {/* Weekly Game Card */}
             <TouchableOpacity
-                style={styles.card}
-                onPress={() => router.push(`/leagues/${leagueId}/weekly-game`)}
+                style={[styles.card, !roundLeaderboard && styles.cardDisabled]}
+                disabled={!roundLeaderboard}
+                onPress={() => router.push(`/leagues/${leagueId}/round-leaderboard`)}
             >
                 <Text style={styles.cardTitle}>Weekly Game</Text>
                 <Text style={styles.cardValue}>
-                    {weeklyGame ? "View current round" : "No active game"}
+                    {roundLeaderboard ? "View current round" : "No active game"}
                 </Text>
             </TouchableOpacity>
+
 
             {/* Leaderboard Card */}
             <TouchableOpacity
@@ -97,8 +121,13 @@ export default function LeagueDetailScreen() {
                 onPress={() => router.push(`/leagues/${leagueId}/leaderboard`)}
             >
                 <Text style={styles.cardTitle}>Leaderboard</Text>
-                <Text style={styles.cardValue}>{leaderboard.length} teams</Text>
+                <Text style={styles.cardValue}>
+                    {leaderboard.length > 0
+                        ? `${leaderboard.length} teams`
+                        : "No teams yet"}
+                </Text>
             </TouchableOpacity>
+
 
             {/* Teams Card */}
             <TouchableOpacity
@@ -106,8 +135,11 @@ export default function LeagueDetailScreen() {
                 onPress={() => router.push(`/leagues/${leagueId}/teams`)}
             >
                 <Text style={styles.cardTitle}>Teams</Text>
-                <Text style={styles.cardValue}>View teams</Text>
+                <Text style={styles.cardValue}>
+                    {leaderboard.length > 0 ? "View teams" : "No teams created"}
+                </Text>
             </TouchableOpacity>
+
         </SafeAreaView>
     );
 }
@@ -141,4 +173,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#555",
     },
+    cardDisabled: {
+        opacity: 0.6,
+    }
 });
