@@ -14,10 +14,20 @@ export default function LeaderboardScreen() {
 
     return (
         <View style={{ padding: 16 }}>
-            <Text>Leaderboard</Text>
-            {teams.map((t) => (
-                <Text key={t.id}>{t.teamName}</Text>
-            ))}
+            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 12 }}>
+                Leaderboard
+            </Text>
+
+            {teams.length === 0 ? (
+                <Text style={{ color: "#666" }}>
+                    No leaderboard data yet.
+                </Text>
+            ) : (
+                teams.map((t) => (
+                    <Text key={t.id}>{t.teamName}</Text>
+                ))
+            )}
         </View>
     );
+
 }
