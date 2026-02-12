@@ -1,4 +1,4 @@
-import { get } from "./http-client";
+import { get, post } from "./http-client";
 import { League } from "./types/league";
 import { RoundLeaderboard } from "./types/roundLeaderboard";
 
@@ -12,4 +12,16 @@ export function fetchLeagueByLeagueIdAndUserId(leagueId: string, userId: string)
 
 export function fetchLeagueRoundLeaderboard(leagueId: string) {
     return get<RoundLeaderboard>(`/api/league/${leagueId}/round-leaderboard`)
+}
+
+export function fetchLeaguesByClubId(clubId: string) {
+  return get<League[]>(`/api/user/${clubId}/leagues`);
+}
+
+export function fetchLeagueByLeagueId(leagueId: string) {
+  return get<League>(`/api/league/${leagueId}`);
+}
+
+export function joinLeague(leagueId: string, userId: string) {
+  return post<League>(`/api/league/${leagueId}/user/${userId}/add`);
 }

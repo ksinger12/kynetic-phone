@@ -23,18 +23,38 @@ export async function get<T>(endpoint: string): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-/**
- * Generic GET helper
- * Replace mock logic later with real backend calls
- */
-export async function oldGet<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`);
-  // console.log(response);
+export async function post<TResponse, TBody = unknown>(
+  endpoint: string,
+  body?: TBody
+): Promise<TResponse | void> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log("POST:", url);
+  console.log("BODY:", body);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const text = await response.text();
+
+  console.log("RAW RESPONSE:", text);
+
   if (!response.ok) {
-    throw new Error("API request failed");
+    throw new Error(`API failed: ${response.status} ${text}`);
   }
-  return response.json();
+
+  // ✅ Handle 204 or empty body
+  if (!text) {
+    return;
+  }
+
+  return JSON.parse(text) as TResponse;
 }
+
 
 export async function mockGet<T>(endpoint: string): Promise<T> {
   // 🔧 MOCK MODE (temporary)
