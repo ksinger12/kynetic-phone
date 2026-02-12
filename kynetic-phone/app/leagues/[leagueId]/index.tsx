@@ -12,14 +12,14 @@ import { fetchLeagueLeaderboard } from "@/api/team-api";
 import { League } from "@/api/types/league";
 import { RoundLeaderboard } from "@/api/types/roundLeaderboard";
 import { Team } from "@/api/types/team";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LeagueDetailScreen() {
 
     const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
     const router = useRouter();
     const navigation = useNavigation();
-
-    const USER_ID = "1"; // temporary hardcoded
+    const { user } = useAuth();
 
     const [league, setLeague] = useState<League | null>(null);
     const [roundLeaderboard, setRoundLeaderboard] = useState<RoundLeaderboard | null>(null);
@@ -28,15 +28,17 @@ export default function LeagueDetailScreen() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!leagueId) return;
+        if (!leagueId || !user) return;
 
         async function loadData() {
+
+            if (!user) return;
 
             try {
                 setLoading(true);
 
                 const [leagueRes, roundBoard, leaderboardRes] = await Promise.all([
-                    fetchLeagueByLeagueIdAndUserId(leagueId, USER_ID),
+                    fetchLeagueByLeagueIdAndUserId(leagueId, user.userId),
                     fetchLeagueRoundLeaderboard(leagueId),
                     fetchLeagueLeaderboard(leagueId),
                 ]);
@@ -54,7 +56,7 @@ export default function LeagueDetailScreen() {
         }
 
         loadData();
-    }, [leagueId]);
+    }, [leagueId, user]);
 
     useEffect(() => {
         navigation.setOptions({

@@ -3,6 +3,7 @@ import { View, FlatList, StyleSheet, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
+import { useAuth } from "@/context/AuthContext";
 import { fetchLeaguesByUserId } from "@/api/league-api";
 import { League } from "@/api/types/league";
 
@@ -44,10 +45,12 @@ function LeagueCard({
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<League[]>([]);
   const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchLeaguesByUserId("1").then(setLeagues);
-  }, []);
+    if (!user) return;
+    fetchLeaguesByUserId(user.userId).then(setLeagues);
+  }, [user]);
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>

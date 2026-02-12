@@ -10,8 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { League } from "@/api/types/league";
 import { fetchLeagueByLeagueId, joinLeague } from "@/api/league-api";
+import { useAuth } from "@/context/AuthContext";
 
-const USER_ID = "1";
 
 // TO BE CREATED
 // GET /api/league/{leagueId}/participants
@@ -22,6 +22,7 @@ async function fetchParticipants(): Promise<{ id: number; name: string }[]> {
 export default function JoinLeagueConfirmScreen() {
     const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
     const router = useRouter();
+    const { user } = useAuth();
 
     const [league, setLeague] = useState<League | null>(null);
     const [participants, setParticipants] = useState<any[]>([]);
@@ -55,7 +56,8 @@ export default function JoinLeagueConfirmScreen() {
             <Pressable
                 style={styles.joinButton}
                 onPress={async () => {
-                    await joinLeague(league.leagueId.toString(), USER_ID);
+                    if (!user) return;
+                    await joinLeague(league.leagueId.toString(), user.userId);
                     router.replace("/(tabs)/leagues");
                 }}
             >

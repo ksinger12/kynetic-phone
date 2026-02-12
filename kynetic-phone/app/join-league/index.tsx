@@ -12,18 +12,19 @@ import { useRouter } from "expo-router";
 import { League } from "@/api/types/league";
 import { fetchLeaguesByClubId } from "@/api/league-api";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function JoinLeagueScreen() {
     const router = useRouter();
     const [leagues, setLeagues] = useState<League[]>([]);
     const [search, setSearch] = useState("");
-
-    const clubId = "1";
+    const { activeClubId } = useAuth();
 
     useEffect(() => {
-        fetchLeaguesByClubId(clubId).then(setLeagues);
-    }, []);
+        if (!activeClubId) return;
+        fetchLeaguesByClubId(activeClubId).then(setLeagues);
+    }, [activeClubId]);
 
     const filtered = leagues.filter((l) =>
         l.leagueName.toLowerCase().includes(search.toLowerCase())
