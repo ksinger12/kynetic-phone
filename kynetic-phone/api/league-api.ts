@@ -22,6 +22,10 @@ export function fetchLeagueByLeagueId(leagueId: string) {
   return get<League>(`/api/league/${leagueId}`);
 }
 
+export function featchLeaguesByClubIdAndStatus(clubId: string, status: string) {
+  return get<League[]>(`/api/club/${clubId}/status/${status}`);
+}
+
 export function joinLeague(leagueId: string, userId: string) {
   return post<League>(`/api/league/${leagueId}/user/${userId}/add`);
 }

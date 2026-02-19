@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { League } from "@/api/types/league";
-import { fetchLeaguesByClubId } from "@/api/league-api";
+import { featchLeaguesByClubIdAndStatus } from "@/api/league-api";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
 
@@ -23,7 +23,7 @@ export default function JoinLeagueScreen() {
 
     useEffect(() => {
         if (!activeClubId) return;
-        fetchLeaguesByClubId(activeClubId).then(setLeagues);
+        featchLeaguesByClubIdAndStatus(activeClubId, "OPEN").then(setLeagues);
     }, [activeClubId]);
 
     const filtered = leagues.filter((l) =>
