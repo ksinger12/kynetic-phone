@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { View, FlatList, StyleSheet, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 
+import { useAuth } from "@/context/AuthContext";
 import { fetchLeaguesByUserId } from "@/api/league-api";
 import { League } from "@/api/types/league";
 
@@ -14,12 +15,13 @@ function LeagueCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [
-      styles.card,
-      pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
-    ]}>
-
-      {/* Accent bar */}
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+      ]}
+    >
       <View style={styles.accentBar} />
 
       <View style={styles.cardContent}>
@@ -34,45 +36,36 @@ function LeagueCard({
           <View style={styles.sportBadge}>
             <Text style={styles.sportText}>{league.sportName}</Text>
           </View>
-
-          {/* future: members */}
-          {/* <Text style={styles.metaText}>83 members</Text> */}
         </View>
       </View>
     </Pressable>
   );
 }
 
-
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<League[]>([]);
   const router = useRouter();
-  const navigation = useNavigation();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchLeaguesByUserId("1").then(setLeagues);
-  }, []);
-
-  // Header button
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable
-          onPress={() => {
-            // stub for now
-            console.log("Join league");
-          }}
-          style={{ marginRight: 12 }}
-        >
-          <Text style={styles.joinButton}>＋ Join League</Text>
-        </Pressable>
-      ),
-      title: "Leagues",
-    });
-  }, [navigation]);
+    if (!user) return;
+    fetchLeaguesByUserId(user.userId).then(setLeagues);
+  }, [user]);
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+      <View style={styles.joinContainer}>
+        <Pressable
+          onPress={() => router.push("/join-league")}
+          style={({ pressed }) => [
+            styles.joinButton,
+            pressed && { opacity: 0.9 },
+          ]}
+        >
+          <Text style={styles.joinText}>＋ Join League</Text>
+        </Pressable>
+      </View>
+
       <FlatList
         data={leagues}
         keyExtractor={(item) => item.leagueId.toString()}
@@ -94,6 +87,25 @@ export default function LeaguesScreen() {
 }
 
 const styles = StyleSheet.create({
+  joinContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+
+  joinButton: {
+    backgroundColor: "#2563EB",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+
+  joinText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
   list: {
     padding: 16,
   },
@@ -104,20 +116,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     flexDirection: "row",
     overflow: "hidden",
-
-    // iOS shadow
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-
-    // Android shadow
     elevation: 3,
   },
 
   accentBar: {
     width: 6,
-    backgroundColor: "#1E3A8A", // sports navy
+    backgroundColor: "#1E3A8A",
   },
 
   cardContent: {
@@ -140,7 +144,6 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 22,
     color: "#999",
-    marginLeft: 8,
   },
 
   clubName: {
@@ -151,7 +154,6 @@ const styles = StyleSheet.create({
 
   metaRow: {
     flexDirection: "row",
-    alignItems: "center",
     marginTop: 10,
   },
 
@@ -166,11 +168,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: "#1E40AF",
-  },
-
-  joinButton: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2563EB",
   },
 });
