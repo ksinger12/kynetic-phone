@@ -1,4 +1,4 @@
-export type TeamData = {
+export type UserTeam = {
   teamId: number;
   leagueId: number;
   teamName: string;

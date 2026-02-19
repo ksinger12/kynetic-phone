@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { League } from "@/api/types/league";
 import { fetchLeagueByLeagueId, joinLeague } from "@/api/league-api";
 import { useAuth } from "@/context/AuthContext";
+import { Modal, TextInput } from "react-native";
 
 
 // TO BE CREATED
@@ -26,6 +27,12 @@ export default function JoinLeagueConfirmScreen() {
 
     const [league, setLeague] = useState<League | null>(null);
     const [participants, setParticipants] = useState<any[]>([]);
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [teamName, setTeamName] = useState("");
+    const [teamSlogan, setTeamSlogan] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
 
     useEffect(() => {
         if (!leagueId) return;
@@ -55,14 +62,70 @@ export default function JoinLeagueConfirmScreen() {
 
             <Pressable
                 style={styles.joinButton}
-                onPress={async () => {
-                    if (!user) return;
-                    await joinLeague(league.leagueId.toString(), user.userId);
-                    router.replace("/(tabs)/leagues");
-                }}
+                onPress={() => setModalVisible(true)}
             >
                 <Text style={styles.joinText}>Join League</Text>
             </Pressable>
+
+            <Modal visible={modalVisible} animationType="slide" transparent>
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                        <Text style={styles.modalTitle}>Create Your Team</Text>
+
+                        <TextInput
+                            placeholder="Team Name"
+                            value={teamName}
+                            onChangeText={setTeamName}
+                            style={styles.input}
+                        />
+
+                        <TextInput
+                            placeholder="Team Slogan (optional)"
+                            value={teamSlogan}
+                            onChangeText={setTeamSlogan}
+                            style={styles.input}
+                        />
+
+                        <Pressable
+                            style={styles.submitButton}
+                            disabled={!teamName || submitting}
+                            onPress={async () => {
+                                if (!user || !teamName) return;
+
+                                try {
+                                    setSubmitting(true);
+
+                                    await joinLeague(
+                                        league.leagueId.toString(),
+                                        user.userId.toString(),
+                                        {
+                                            teamName,
+                                            teamSlogan,
+                                        }
+                                    );
+
+                                    setModalVisible(false);
+                                    router.replace("/(tabs)/leagues");
+                                } catch (e) {
+                                    console.error(e);
+                                } finally {
+                                    setSubmitting(false);
+                                }
+                            }}
+                        >
+                            <Text style={styles.submitText}>
+                                {submitting ? "Creating..." : "Submit"}
+                            </Text>
+                        </Pressable>
+
+                        <Pressable onPress={() => setModalVisible(false)}>
+                            <Text style={styles.cancelText}>Cancel</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+
+
         </SafeAreaView>
     );
 }
@@ -95,4 +158,50 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        padding: 20,
+    },
+
+    modalCard: {
+        backgroundColor: "#fff",
+        borderRadius: 20,
+        padding: 20,
+    },
+
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 16,
+    },
+
+    input: {
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 12,
+    },
+
+    submitButton: {
+        backgroundColor: "#007AFF",
+        padding: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 8,
+    },
+
+    submitText: {
+        color: "#fff",
+        fontWeight: "700",
+    },
+
+    cancelText: {
+        textAlign: "center",
+        marginTop: 12,
+        color: "#666",
+    },
+
 });

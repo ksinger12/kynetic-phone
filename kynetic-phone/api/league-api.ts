@@ -1,4 +1,5 @@
 import { get, post } from "./http-client";
+import { CreateTeam } from "./types/createTeam";
 import { League } from "./types/league";
 import { RoundLeaderboard } from "./types/roundLeaderboard";
 
@@ -26,6 +27,6 @@ export function featchLeaguesByClubIdAndStatus(clubId: string, status: string) {
   return get<League[]>(`/api/club/${clubId}/status/${status}`);
 }
 
-export function joinLeague(leagueId: string, userId: string) {
-  return post<League>(`/api/league/${leagueId}/user/${userId}/add`);
+export function joinLeague(leagueId: string, userId: string, body: CreateTeam) {
+  return post<League>(`/api/userId/${userId}/leagueId/${leagueId}/team/create`, body);
 }
