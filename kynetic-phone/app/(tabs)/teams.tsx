@@ -5,13 +5,13 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchTeamsByUserId } from "@/api/teams-api";
-import { TeamData } from "@/api/types/teamData";
+import { UserTeam } from "@/api/types/userTeam";
 
 function TeamCard({
   team,
   onPress,
 }: {
-  team: TeamData;
+  team: UserTeam;
   onPress: () => void;
 }) {
   return (
@@ -52,7 +52,7 @@ function TeamCard({
 }
 
 export default function TeamsScreen() {
-  const [teams, setTeams] = useState<TeamData[]>([]);
+  const [teams, setTeams] = useState<UserTeam[]>([]);
   const { user } = useAuth();
   const router = useRouter();
 

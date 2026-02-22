@@ -1,5 +1,5 @@
 // const API_BASE_URL = "http://localhost:8484";
-const API_BASE_URL = "http://192.168.1.13:8484"//"http://10.88.111.9:8484"; 
+const API_BASE_URL = "http://10.88.111.9:8484"; //"http://192.168.1.13:8484"
 
 
 export async function get<T>(endpoint: string): Promise<T> {

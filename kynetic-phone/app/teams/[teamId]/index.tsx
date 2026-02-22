@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { fetchTeamById } from "@/api/teams-api";
-import { TeamData } from "@/api/types/teamData";
+import { UserTeam } from "@/api/types/userTeam";
 
 if (Platform.OS === "android") { // what is this?
     UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -34,7 +34,7 @@ export default function TeamDetailsScreen() {
     const scheme = useColorScheme();
     const isDark = scheme === "dark"; // questionable
 
-    const [team, setTeam] = useState<TeamData | null>(null);
+    const [team, setTeam] = useState<UserTeam | null>(null);
     const [expanded, setExpanded] = useState<number | null>(null);
 
     const rotations = useRef<{ [key: number]: Animated.Value }>({}).current;
