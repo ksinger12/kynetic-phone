@@ -1,8 +1,19 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    ReactNode,
+} from "react";
+
+type Club = {
+    clubId: string;
+    clubName: string;
+};
 
 type User = {
     userId: string;
-    clubs: { clubId: string; clubName: string }[];
+    token: string;
+    clubs: Club[];
 };
 
 type AuthContextType = {
@@ -16,13 +27,8 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    // 🔥 HARDCODED IN ONE PLACE ONLY (temporary)
-    const [user, setUser] = useState<User | null>({
-        userId: "1",
-        clubs: [{ clubId: "1", clubName: "Cedar Brae Golf Club" }],
-    });
-
-    const [activeClubId, setActiveClubId] = useState<string | null>("1");
+    const [user, setUser] = useState<User | null>(null);
+    const [activeClubId, setActiveClubId] = useState<string | null>(null);
 
     function login(userData: User) {
         setUser(userData);

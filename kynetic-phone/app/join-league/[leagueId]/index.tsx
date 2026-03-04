@@ -178,11 +178,13 @@ const styles = StyleSheet.create({
     },
 
     input: {
+        backgroundColor: "#fff",
+        color: "#000",
         borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 12,
+        borderColor: "#ccc",
         padding: 12,
-        marginBottom: 12,
+        borderRadius: 12,
+        marginBottom: 16,
     },
 
     submitButton: {

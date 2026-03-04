@@ -12,14 +12,59 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Public */}
+          <Stack.Screen name="index" />
+          <Stack.Screen
+            name="login"
+            options={{ headerShown: true }}
+          />
+
+          <Stack.Screen
+            name="signup/step-one"
+            options={{ headerShown: true, title: 'Create Account' }}
+          />
+
+          <Stack.Screen
+            name="signup/step-two"
+            options={{ headerShown: true, title: 'Select Clubs' }}
+          />
+
+          {/* Main App */}
+          <Stack.Screen name="(tabs)" />
+
+          {/* Detail pages */}
           <Stack.Screen
             name="join-league"
             options={{
+              headerShown: true,
               title: 'Join League',
-              headerBackTitle: 'Leagues',
             }}
+          />
+
+          <Stack.Screen
+            name="leagues/[leagueId]/index"
+            options={{ headerShown: true, title: 'League' }}
+          />
+
+          <Stack.Screen
+            name="leagues/[leagueId]/leaderboard"
+            options={{ headerShown: true, title: 'Leaderboard' }}
+          />
+
+          <Stack.Screen
+            name="leagues/[leagueId]/round-leaderboard"
+            options={{ headerShown: true, title: 'Round Leaderboard' }}
+          />
+
+          <Stack.Screen
+            name="leagues/[leagueId]/teams"
+            options={{ headerShown: true, title: 'Teams' }}
+          />
+
+          <Stack.Screen
+            name="teams/[teamId]"
+            options={{ headerShown: true, title: 'Team Details' }}
           />
         </Stack>
       </AuthProvider>
