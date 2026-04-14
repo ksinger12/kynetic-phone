@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
-    fetchLeagueByLeagueIdAndUserId,
+    fetchMyLeagueById,
     fetchLeagueRoundLeaderboard,
 } from "@/api/league-api";
 import { fetchLeagueLeaderboard } from "@/api/team-api";
@@ -12,14 +12,12 @@ import { fetchLeagueLeaderboard } from "@/api/team-api";
 import { League } from "@/api/types/league";
 import { RoundLeaderboard } from "@/api/types/roundLeaderboard";
 import { Team } from "@/api/types/team";
-import { useAuth } from "@/context/AuthContext";
 
 export default function LeagueDetailScreen() {
 
     const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
     const router = useRouter();
     const navigation = useNavigation();
-    const { user } = useAuth();
 
     const [league, setLeague] = useState<League | null>(null);
     const [roundLeaderboard, setRoundLeaderboard] = useState<RoundLeaderboard | null>(null);
@@ -28,17 +26,14 @@ export default function LeagueDetailScreen() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!leagueId || !user) return;
+        if (!leagueId) return;
 
         async function loadData() {
-
-            if (!user) return;
-
             try {
                 setLoading(true);
 
                 const [leagueRes, roundBoard, leaderboardRes] = await Promise.all([
-                    fetchLeagueByLeagueIdAndUserId(leagueId, user.userId),
+                    fetchMyLeagueById(leagueId),
                     fetchLeagueRoundLeaderboard(leagueId),
                     fetchLeagueLeaderboard(leagueId),
                 ]);
@@ -56,7 +51,7 @@ export default function LeagueDetailScreen() {
         }
 
         loadData();
-    }, [leagueId, user]);
+    }, [leagueId]);
 
     useEffect(() => {
         navigation.setOptions({

@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
-import { fetchTeamsByUserId } from "@/api/teams-api";
+import { fetchMyTeams } from "@/api/teams-api";
 import { UserTeam } from "@/api/types/userTeam";
 
 function TeamCard({
@@ -58,7 +58,7 @@ export default function TeamsScreen() {
 
   useEffect(() => {
     if (!user) return;
-    fetchTeamsByUserId(user.userId).then(setTeams);
+    fetchMyTeams().then(setTeams);
   }, [user]);
 
   return (

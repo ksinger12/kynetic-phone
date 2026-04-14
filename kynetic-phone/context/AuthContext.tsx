@@ -1,48 +1,100 @@
 import {
     createContext,
     useContext,
+    useEffect,
     useState,
     ReactNode,
 } from "react";
+import { fetchCurrentSession, logoutUser } from "@/api/auth-api";
+import { AuthUser } from "@/api/types/auth";
+import { ApiError } from "@/api/http-client";
 
-type Club = {
-    clubId: string;
-    clubName: string;
-};
-
-type User = {
-    userId: string;
-    token: string;
-    clubs: Club[];
-};
+type AuthStatus =
+    | "bootstrapping"
+    | "authenticated"
+    | "must_change_password"
+    | "unauthenticated";
 
 type AuthContextType = {
-    user: User | null;
+    user: AuthUser | null;
+    authStatus: AuthStatus;
+    isAuthenticated: boolean;
+    isBootstrapping: boolean;
     activeClubId: string | null;
-    login: (user: User) => void;
-    logout: () => void;
-    setActiveClubId: (clubId: string) => void;
+    login: (user: AuthUser) => void;
+    logout: () => Promise<void>;
+    refreshSession: () => Promise<void>;
+    setActiveClubId: (clubId: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [authStatus, setAuthStatus] = useState<AuthStatus>("bootstrapping");
     const [activeClubId, setActiveClubId] = useState<string | null>(null);
 
-    function login(userData: User) {
+    function applyUser(userData: AuthUser) {
         setUser(userData);
-        setActiveClubId(userData.clubs[0]?.clubId ?? null);
+        setAuthStatus(
+            userData.mustChangePassword ? "must_change_password" : "authenticated"
+        );
     }
 
-    function logout() {
+    function clearSession() {
         setUser(null);
+        setAuthStatus("unauthenticated");
         setActiveClubId(null);
+    }
+
+    async function refreshSession() {
+        try {
+            const sessionUser = await fetchCurrentSession();
+            applyUser(sessionUser);
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 401) {
+                clearSession();
+                return;
+            }
+
+            throw error;
+        }
+    }
+
+    useEffect(() => {
+        refreshSession().catch((error) => {
+            console.error("Failed to restore session", error);
+            clearSession();
+        });
+    }, []);
+
+    function login(userData: AuthUser) {
+        applyUser(userData);
+    }
+
+    async function logout() {
+        try {
+            await logoutUser();
+        } finally {
+            clearSession();
+        }
     }
 
     return (
         <AuthContext.Provider
-            value={{ user, activeClubId, login, logout, setActiveClubId }}
+            value={{
+                user,
+                authStatus,
+                isAuthenticated:
+                    authStatus === "authenticated" ||
+                    authStatus === "must_change_password",
+                isBootstrapping: authStatus === "bootstrapping",
+                activeClubId,
+                login,
+                logout,
+                refreshSession,
+                setActiveClubId,
+            }}
         >
             {children}
         </AuthContext.Provider>

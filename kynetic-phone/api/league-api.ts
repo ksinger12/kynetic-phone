@@ -3,30 +3,26 @@ import { CreateTeam } from "./types/createTeam";
 import { League } from "./types/league";
 import { RoundLeaderboard } from "./types/roundLeaderboard";
 
-export function fetchLeaguesByUserId(userId: string) {
-  return get<League[]>(`/api/user/${userId}/leagues`);
+export function fetchMyLeagues() {
+  return get<League[]>("/api/me/leagues");
 }
 
-export function fetchLeagueByLeagueIdAndUserId(leagueId: string, userId: string) {
-    return get<League>(`/api/user/${userId}/league/${leagueId}`)
+export function fetchMyLeagueById(leagueId: string | number) {
+    return get<League>(`/api/me/league/${leagueId}`)
 }
 
 export function fetchLeagueRoundLeaderboard(leagueId: string) {
     return get<RoundLeaderboard>(`/api/league/${leagueId}/round-leaderboard`)
 }
 
-export function fetchLeaguesByClubId(clubId: string) {
-  return get<League[]>(`/api/user/${clubId}/leagues`);
-}
-
-export function fetchLeagueByLeagueId(leagueId: string) {
+export function fetchLeagueByLeagueId(leagueId: string | number) {
   return get<League>(`/api/league/${leagueId}`);
 }
 
-export function featchLeaguesByClubIdAndStatus(clubId: string, status: string) {
+export function featchLeaguesByClubIdAndStatus(clubId: string | number, status: string) {
   return get<League[]>(`/api/club/${clubId}/status/${status}`);
 }
 
-export function joinLeague(leagueId: string, userId: string, body: CreateTeam) {
-  return post<League>(`/api/userId/${userId}/leagueId/${leagueId}/team/create`, body);
+export function createTeamForLeague(leagueId: string | number, body: CreateTeam) {
+  return post<League>(`/api/league/${leagueId}/team/create`, body);
 }

@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { League } from "@/api/types/league";
-import { fetchLeagueByLeagueId, joinLeague } from "@/api/league-api";
+import { createTeamForLeague, fetchLeagueByLeagueId } from "@/api/league-api";
 import { useAuth } from "@/context/AuthContext";
 import { Modal, TextInput } from "react-native";
 
@@ -95,9 +95,8 @@ export default function JoinLeagueConfirmScreen() {
                                 try {
                                     setSubmitting(true);
 
-                                    await joinLeague(
+                                    await createTeamForLeague(
                                         league.leagueId.toString(),
-                                        user.userId.toString(),
                                         {
                                             teamName,
                                             teamSlogan,

@@ -5,6 +5,6 @@ export async function fetchTeamById(teamId: string) {
     return get<UserTeam>(`/api/team/${teamId}`)
 }
 
-export async function fetchTeamsByUserId(userId: string) {
-    return get<UserTeam[]>(`/api/user/${userId}/teams`)
+export async function fetchMyTeams() {
+    return get<UserTeam[]>("/api/me/teams")
 }

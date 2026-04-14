@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
-import { fetchLeaguesByUserId } from "@/api/league-api";
+import { fetchMyLeagues } from "@/api/league-api";
 import { League } from "@/api/types/league";
 
 function LeagueCard({
@@ -49,7 +49,7 @@ export default function LeaguesScreen() {
 
   useEffect(() => {
     if (!user) return;
-    fetchLeaguesByUserId(user.userId).then(setLeagues);
+    fetchMyLeagues().then(setLeagues);
   }, [user]);
 
   return (
