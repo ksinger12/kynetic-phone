@@ -13,9 +13,12 @@ import { changePassword } from "@/api/auth-api";
 import { ApiError } from "@/api/http-client";
 import { useAuth } from "@/context/AuthContext";
 
+const MIN_PASSWORD_LENGTH = 12;
+const MUST_CHANGE_PASSWORD_STATUS = "must_change_password";
+
 function validateNewPassword(password: string): string | null {
-  if (password.length < 12) {
-    return "New password must be at least 12 characters.";
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
   }
 
   if (!/\d/.test(password)) {
@@ -106,7 +109,7 @@ export default function ChangePasswordScreen() {
     }
   };
 
-  if (authStatus !== "must_change_password") {
+  if (authStatus !== MUST_CHANGE_PASSWORD_STATUS) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
