@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchMyLeagues } from "@/api/league-api";
+import { fetchUserLeagueTeam } from "@/api/team-api";
 import { League } from "@/api/types/league";
 
 function LeagueCard({
@@ -32,6 +33,10 @@ function LeagueCard({
 
         <Text style={styles.clubName}>{league.clubName}</Text>
 
+        <Text style={styles.status}>
+          Status: {league.leagueStatus} / {league.leagueSubStatus}
+        </Text>
+
         <View style={styles.metaRow}>
           <View style={styles.sportBadge}>
             <Text style={styles.sportText}>{league.sportName}</Text>
@@ -51,6 +56,28 @@ export default function LeaguesScreen() {
     if (!user) return;
     fetchMyLeagues().then(setLeagues);
   }, [user]);
+
+  const handleLeaguePress = async (league: League) => {
+    if (!user) return;
+
+    const draftingAllowed =
+      (league.leagueStatus === "OPEN" || league.leagueStatus === "ACTIVE") &&
+      league.leagueSubStatus === "DRAFTING";
+
+    if (draftingAllowed) {
+      const team = await fetchUserLeagueTeam(league.leagueId);
+
+      if (!team) {
+        router.push(`/teams/draft/${league.leagueId}/0`);
+        return;
+      }
+    }
+
+    router.push({
+      pathname: "/leagues/[leagueId]",
+      params: { leagueId: league.leagueId.toString() },
+    });
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
@@ -73,12 +100,7 @@ export default function LeaguesScreen() {
         renderItem={({ item }) => (
           <LeagueCard
             league={item}
-            onPress={() =>
-              router.push({
-                pathname: "/leagues/[leagueId]",
-                params: { leagueId: item.leagueId.toString() },
-              })
-            }
+            onPress={() => handleLeaguePress(item)}
           />
         )}
       />
@@ -169,4 +191,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1E40AF",
   },
+
+  status: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#d55e4c",
+  }
 });

@@ -1,5 +1,6 @@
 // const API_BASE_URL = "http://localhost:8484";
-const API_BASE_URL = "http://192.168.1.33:8484";
+const API_BASE_URL = "http://10.88.111.9:8484";// (apartment) //"http://192.168.1.13:8484" (nic's home)
+// nic: const API_BASE_URL = "http://192.168.1.33:8484";
 
 type ApiErrorBody = {
   message?: string;

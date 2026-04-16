@@ -4,6 +4,9 @@ export interface League {
   leagueId: number;
   leagueName: string;
   leagueComment: string;
+  leagueStatus: string;
+  leagueSubStatus: string;
+  roundCount: number;
   sportId: number;
   sportName: string;
 }
