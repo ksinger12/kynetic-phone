@@ -1,16 +1,9 @@
 import { post, get } from "./http-client";
 import {
-  RegisterRequest,
   LoginRequest,
   AuthUser,
   ChangePasswordRequest,
 } from "./types/auth";
-
-export function registerUser(
-  body: RegisterRequest
-): Promise<{ userId: string } | void> {
-  return post<{ userId: string }, RegisterRequest>("/api/auth/register", body);
-}
 
 export function loginUser(body: LoginRequest): Promise<AuthUser> {
   return post<AuthUser, LoginRequest>("/api/auth/login", body) as Promise<AuthUser>;

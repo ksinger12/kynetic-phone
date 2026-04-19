@@ -16,10 +16,7 @@ function AuthGate() {
 
   const firstSegment = segments[0];
   const isIndexRoute = firstSegment === undefined;
-  const isAuthRoute =
-    isIndexRoute ||
-    firstSegment === "login" ||
-    firstSegment === "signup";
+  const isAuthRoute = isIndexRoute || firstSegment === "login";
   const isChangePasswordRoute = firstSegment === "change-password";
   const isProtectedRoute = !isAuthRoute && !isChangePasswordRoute;
 
@@ -72,14 +69,6 @@ function RootNavigator() {
         <Stack.Screen
           name="change-password"
           options={{ headerShown: true, title: "Change Password" }}
-        />
-        <Stack.Screen
-          name="signup/step-one"
-          options={{ headerShown: true, title: "Create Account" }}
-        />
-        <Stack.Screen
-          name="signup/step-two"
-          options={{ headerShown: true, title: "Select Clubs" }}
         />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen

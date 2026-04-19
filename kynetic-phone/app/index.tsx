@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-
 export default function LandingScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -13,7 +12,6 @@ export default function LandingScreen() {
       router.replace("/(tabs)/home");
     }
   }, [user]);
-
 
   return (
     <View style={styles.container}>
@@ -31,13 +29,6 @@ export default function LandingScreen() {
         onPress={() => router.push("/login")}
       >
         <Text style={styles.buttonText}>Login</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.secondaryButton}
-        onPress={() => router.push("/signup/step-one")}
-      >
-        <Text style={styles.secondaryText}>Create Account</Text>
       </Pressable>
     </View>
   );
@@ -61,17 +52,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
   },
-  secondaryButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
   buttonText: {
     color: "#fff",
     fontWeight: "700",
-  },
-  secondaryText: {
-    color: "#007AFF",
-    fontWeight: "600",
   },
   header: {
     alignItems: "center",
