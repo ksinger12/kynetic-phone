@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     View,
     Text,
@@ -8,23 +8,75 @@ import {
     StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { League } from "@/api/types/league";
-import { featchLeaguesByClubIdAndStatus } from "@/api/league-api";
+import { fetchLeaguesByStatus } from "@/api/league-api";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
-
+import {
+    beginNavigationLock,
+    canStartNavigation,
+} from "@/utils/navigation-lock";
 
 export default function JoinLeagueScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const [leagues, setLeagues] = useState<League[]>([]);
+    const navigationLockRef = useRef(false);
     const [search, setSearch] = useState("");
-    const { activeClubId } = useAuth();
 
     useEffect(() => {
-        if (!activeClubId) return;
-        featchLeaguesByClubIdAndStatus(activeClubId, "OPEN").then(setLeagues);
-    }, [activeClubId]);
+        if (!user) {
+            setLeagues([]);
+            return;
+        }
+
+        let isMounted = true;
+
+        async function loadOpenLeagues() {
+            try {
+                if (!user?.clubs.length) {
+                    if (isMounted) {
+                        setLeagues([]);
+                    }
+                    return;
+                }
+
+                const clubLeagueResponses = await Promise.all(
+                    user.clubs.map(({ clubId }) => fetchLeaguesByStatus(clubId))
+                );
+
+                const uniqueLeagues = Array.from(
+                    new Map(
+                        clubLeagueResponses
+                            .flat()
+                            .map((league) => [league.leagueId, league])
+                    ).values()
+                );
+
+                if (isMounted) {
+                    setLeagues(uniqueLeagues);
+                }
+            } catch (error) {
+                console.error("Failed to load open leagues", error);
+                if (isMounted) {
+                    setLeagues([]);
+                }
+            }
+        }
+
+        loadOpenLeagues();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user]);
+
+    useFocusEffect(
+        useCallback(() => {
+            navigationLockRef.current = false;
+        }, [])
+    );
 
     const filtered = leagues.filter((l) =>
         l.leagueName.toLowerCase().includes(search.toLowerCase())
@@ -50,13 +102,15 @@ export default function JoinLeagueScreen() {
                 renderItem={({ item }) => (
                     <Pressable
                         style={styles.card}
-                        onPress={() =>
-                            router.push({
+                        onPress={() => {
+                            if (navigationLockRef.current || !canStartNavigation()) return;
+                            navigationLockRef.current = true;
+                            beginNavigationLock();
+                            router.navigate({
                                 pathname: "/join-league/[leagueId]",
                                 params: { leagueId: item.leagueId.toString() },
-                            })
-
-                        }
+                            });
+                        }}
                     >
                         <Text style={styles.title}>{item.leagueName}</Text>
                         <Text style={styles.sub}>{item.clubName}</Text>

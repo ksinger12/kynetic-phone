@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, FlatList, StyleSheet, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
-import { fetchLeaguesByUserId } from "@/api/league-api";
+import { fetchMyLeagues } from "@/api/league-api";
+import { fetchUserLeagueTeam } from "@/api/team-api";
 import { League } from "@/api/types/league";
+import {
+  beginNavigationLock,
+  canStartNavigation,
+} from "@/utils/navigation-lock";
 
 function LeagueCard({
   league,
@@ -32,6 +37,10 @@ function LeagueCard({
 
         <Text style={styles.clubName}>{league.clubName}</Text>
 
+        <Text style={styles.status}>
+          Status: {league.leagueStatus} / {league.leagueSubStatus}
+        </Text>
+
         <View style={styles.metaRow}>
           <View style={styles.sportBadge}>
             <Text style={styles.sportText}>{league.sportName}</Text>
@@ -44,19 +53,70 @@ function LeagueCard({
 
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<League[]>([]);
+  const navigationLockRef = useRef(false);
   const router = useRouter();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) return;
-    fetchLeaguesByUserId(user.userId).then(setLeagues);
+  const loadLeagues = useCallback(() => {
+    if (!user) {
+      setLeagues([]);
+      return;
+    }
+
+    fetchMyLeagues().then(setLeagues);
   }, [user]);
+
+  useEffect(() => {
+    loadLeagues();
+  }, [loadLeagues]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigationLockRef.current = false;
+      loadLeagues();
+    }, [loadLeagues])
+  );
+
+  const handleLeaguePress = async (league: League) => {
+    if (!user || navigationLockRef.current || !canStartNavigation()) return;
+
+    navigationLockRef.current = true;
+    beginNavigationLock();
+
+    try {
+      const draftingAllowed =
+        (league.leagueStatus === "OPEN" || league.leagueStatus === "ACTIVE") &&
+        league.leagueSubStatus === "DRAFTING";
+
+      if (draftingAllowed) {
+        const team = await fetchUserLeagueTeam(league.leagueId);
+
+        if (!team) {
+          router.navigate(`/teams/draft/${league.leagueId}/0`);
+          return;
+        }
+      }
+
+      router.navigate({
+        pathname: "/leagues/[leagueId]",
+        params: { leagueId: league.leagueId.toString() },
+      });
+    } catch (error) {
+      console.error("Failed to open league", error);
+      navigationLockRef.current = false;
+    }
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
       <View style={styles.joinContainer}>
         <Pressable
-          onPress={() => router.push("/join-league")}
+          onPress={() => {
+            if (navigationLockRef.current || !canStartNavigation()) return;
+            navigationLockRef.current = true;
+            beginNavigationLock();
+            router.navigate("/join-league");
+          }}
           style={({ pressed }) => [
             styles.joinButton,
             pressed && { opacity: 0.9 },
@@ -73,12 +133,7 @@ export default function LeaguesScreen() {
         renderItem={({ item }) => (
           <LeagueCard
             league={item}
-            onPress={() =>
-              router.push({
-                pathname: "/leagues/[leagueId]",
-                params: { leagueId: item.leagueId.toString() },
-              })
-            }
+            onPress={() => handleLeaguePress(item)}
           />
         )}
       />
@@ -169,4 +224,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1E40AF",
   },
+
+  status: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#d55e4c",
+  }
 });

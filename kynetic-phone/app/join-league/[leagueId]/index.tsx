@@ -5,13 +5,19 @@ import {
     StyleSheet,
     FlatList,
     Pressable,
+    InteractionManager,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { League } from "@/api/types/league";
-import { fetchLeagueByLeagueId, joinLeague } from "@/api/league-api";
+import { createTeamForLeague, fetchLeagueByLeagueId } from "@/api/league-api";
 import { useAuth } from "@/context/AuthContext";
-import { Modal, TextInput } from "react-native";
+import { beginNavigationLock } from "@/utils/navigation-lock";
 
 
 // TO BE CREATED
@@ -31,6 +37,7 @@ export default function JoinLeagueConfirmScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [teamName, setTeamName] = useState("");
     const [teamSlogan, setTeamSlogan] = useState("");
+    const [pendingReturnToLeagues, setPendingReturnToLeagues] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
 
@@ -40,6 +47,21 @@ export default function JoinLeagueConfirmScreen() {
         fetchLeagueByLeagueId(leagueId).then(setLeague);
         fetchParticipants().then(setParticipants);
     }, [leagueId]);
+
+    useEffect(() => {
+        if (modalVisible || !pendingReturnToLeagues) {
+            return;
+        }
+
+        const interactionHandle = InteractionManager.runAfterInteractions(() => {
+            setPendingReturnToLeagues(false);
+            router.dismissTo("/(tabs)/leagues");
+        });
+
+        return () => {
+            interactionHandle.cancel();
+        };
+    }, [modalVisible, pendingReturnToLeagues, router]);
 
     if (!league) return null;
 
@@ -68,61 +90,73 @@ export default function JoinLeagueConfirmScreen() {
             </Pressable>
 
             <Modal visible={modalVisible} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalCard}>
-                        <Text style={styles.modalTitle}>Create Your Team</Text>
-
-                        <TextInput
-                            placeholder="Team Name"
-                            value={teamName}
-                            onChangeText={setTeamName}
-                            style={styles.input}
-                        />
-
-                        <TextInput
-                            placeholder="Team Slogan (optional)"
-                            value={teamSlogan}
-                            onChangeText={setTeamSlogan}
-                            style={styles.input}
-                        />
-
-                        <Pressable
-                            style={styles.submitButton}
-                            disabled={!teamName || submitting}
-                            onPress={async () => {
-                                if (!user || !teamName) return;
-
-                                try {
-                                    setSubmitting(true);
-
-                                    await joinLeague(
-                                        league.leagueId.toString(),
-                                        user.userId.toString(),
-                                        {
-                                            teamName,
-                                            teamSlogan,
-                                        }
-                                    );
-
-                                    setModalVisible(false);
-                                    router.replace("/(tabs)/leagues");
-                                } catch (e) {
-                                    console.error(e);
-                                } finally {
-                                    setSubmitting(false);
-                                }
-                            }}
+                <KeyboardAvoidingView
+                    style={styles.modalKeyboardContainer}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                >
+                    <View style={styles.modalOverlay}>
+                        <ScrollView
+                            contentContainerStyle={styles.modalScrollContent}
+                            keyboardShouldPersistTaps="handled"
                         >
-                            <Text style={styles.submitText}>
-                                {submitting ? "Creating..." : "Submit"}
-                            </Text>
-                        </Pressable>
+                            <View style={styles.modalCard}>
+                                <Text style={styles.modalTitle}>Create Your Team</Text>
 
-                        <Pressable onPress={() => setModalVisible(false)}>
-                            <Text style={styles.cancelText}>Cancel</Text>
-                        </Pressable>
+                                <TextInput
+                                    placeholder="Team Name"
+                                    placeholderTextColor="#6b7280"
+                                    value={teamName}
+                                    onChangeText={setTeamName}
+                                    style={styles.input}
+                                />
+
+                                <TextInput
+                                    placeholder="Team Slogan (optional)"
+                                    placeholderTextColor="#6b7280"
+                                    value={teamSlogan}
+                                    onChangeText={setTeamSlogan}
+                                    style={styles.input}
+                                />
+
+                                <Pressable
+                                    style={styles.submitButton}
+                                    disabled={!teamName || submitting}
+                                    onPress={async () => {
+                                        if (!user || !teamName) return;
+
+                                        try {
+                                            setSubmitting(true);
+
+                                            await createTeamForLeague(
+                                                league.leagueId.toString(),
+                                                {
+                                                    teamName,
+                                                    teamSlogan,
+                                                }
+                                            );
+
+                                            setPendingReturnToLeagues(true);
+                                            setModalVisible(false);
+                                            beginNavigationLock();
+                                        } catch (e) {
+                                            console.error(e);
+                                        } finally {
+                                            setSubmitting(false);
+                                        }
+                                    }}
+                                >
+                                    <Text style={styles.submitText}>
+                                        {submitting ? "Creating..." : "Submit"}
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable onPress={() => setModalVisible(false)}>
+                                    <Text style={styles.cancelText}>Cancel</Text>
+                                </Pressable>
+                            </View>
+                        </ScrollView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
 
@@ -158,11 +192,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
+    modalKeyboardContainer: {
+        flex: 1,
+    },
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.5)",
         justifyContent: "center",
         padding: 20,
+    },
+    modalScrollContent: {
+        flexGrow: 1,
+        justifyContent: "center",
     },
 
     modalCard: {

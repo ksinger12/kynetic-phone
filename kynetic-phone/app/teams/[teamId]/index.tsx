@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { fetchTeamById } from "@/api/teams-api";
 import { UserTeam } from "@/api/types/userTeam";
+import { fetchLeagueByLeagueId } from "@/api/league-api";
+import { League } from "@/api/types/league";
 
 if (Platform.OS === "android") { // what is this?
     UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -37,6 +39,8 @@ export default function TeamDetailsScreen() {
     const [team, setTeam] = useState<UserTeam | null>(null);
     const [expanded, setExpanded] = useState<number | null>(null);
 
+    const [league, setLeague] = useState<League | null>(null);
+
     const rotations = useRef<{ [key: number]: Animated.Value }>({}).current;
 
     const players: PlayerPerformance[] = [
@@ -47,8 +51,26 @@ export default function TeamDetailsScreen() {
 
     useEffect(() => {
         if (!teamId) return;
-        fetchTeamById(teamId).then(setTeam);
+
+        async function load() {
+            const teamData = await fetchTeamById(teamId);
+            setTeam(teamData);
+
+            const leagueData = await fetchLeagueByLeagueId(teamData.leagueId.toString());
+            setLeague(leagueData);
+        }
+
+        load();
     }, [teamId]);
+
+    useEffect(() => {
+        if (!league || !team) return;
+
+        if (league.leagueStatus === "Open" && league.leagueSubStatus === "Drafting") {
+            router.replace(`/teams/${team.teamId}/draft`);
+        }
+
+    }, [league, team]);
 
     if (!team) return null;
 
@@ -107,7 +129,7 @@ export default function TeamDetailsScreen() {
                             onPress={() =>
                                 router.push({
                                     pathname: "/leagues/[leagueId]",
-                                    params: { leagueId: team.teamId.toString() },
+                                    params: { leagueId: team.leagueId.toString() },
                                 })
                             }
                         >

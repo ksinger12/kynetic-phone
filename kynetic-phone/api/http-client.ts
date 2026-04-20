@@ -1,63 +1,112 @@
 // const API_BASE_URL = "http://localhost:8484";
 const API_BASE_URL = "http://10.88.111.9:8484";// (apartment) //"http://192.168.1.13:8484" (nic's home)
+// nic: const API_BASE_URL = "http://192.168.1.33:8484";
 
+type ApiErrorBody = {
+  message?: string;
+  errors?: Record<string, string[]>;
+};
 
-export async function get<T>(endpoint: string): Promise<T> {
+export class ApiError extends Error {
+  status: number;
+  body: ApiErrorBody | null;
+
+  constructor(status: number, message: string, body: ApiErrorBody | null = null) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+async function request<TResponse>(
+  endpoint: string,
+  init?: RequestInit
+): Promise<TResponse | void> {
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log("GET:", url);
+  const method = init?.method ?? "GET";
 
-  const response = await fetch(url);
+  console.log(`${method}:`, url);
+  if (init?.body) {
+    console.log("BODY:", init.body);
+  }
 
-  const text = await response.text(); // <-- critical
+  const response = await fetch(url, {
+    credentials: "include",
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+    },
+  });
 
+  const text = await response.text();
   console.log("RAW RESPONSE:", text);
 
+  const parsedBody = parseBody(text);
+  const errorBody = toApiErrorBody(parsedBody);
+
   if (!response.ok) {
-    throw new Error(`API failed: ${response.status} ${text}`);
+    const message =
+      errorBody?.message ??
+      (text ? `API failed: ${response.status} ${text}` : `API failed: ${response.status}`);
+    throw new ApiError(response.status, message, errorBody);
   }
 
   if (!text) {
-    throw new Error("Empty response body");
+    return;
   }
 
-  return JSON.parse(text) as T;
+  return parsedBody as TResponse;
 }
 
-export async function post<TResponse, TBody = unknown>(
+function parseBody(text: string): unknown | null {
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
+function toApiErrorBody(value: unknown): ApiErrorBody | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const maybeError = value as Record<string, unknown>;
+  const body: ApiErrorBody = {};
+
+  if (typeof maybeError.message === "string") {
+    body.message = maybeError.message;
+  }
+
+  if (maybeError.errors && typeof maybeError.errors === "object") {
+    body.errors = maybeError.errors as Record<string, string[]>;
+  }
+
+  return Object.keys(body).length > 0 ? body : null;
+}
+
+export async function get<T>(endpoint: string): Promise<T> {
+  const response = await request<T>(endpoint);
+  if (response === undefined) {
+    throw new Error("Empty response body");
+  }
+  return response;
+}
+
+export function post<TResponse, TBody = unknown>(
   endpoint: string,
   body?: TBody
 ): Promise<TResponse | void> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  console.log("POST:", url);
-  console.log("BODY:", body);
-
-  const response = await fetch(url, {
+  return request<TResponse>(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-
-  const text = await response.text();
-
-  console.log("RAW RESPONSE:", text);
-
-  if (!response.ok) {
-    throw new Error(`API failed: ${response.status} ${text}`);
-  }
-
-  // ✅ Handle 204 or empty body
-  if (!text) {
-    return;
-  }
-
-  return JSON.parse(text) as TResponse;
-}
-
-
-export async function mockGet<T>(endpoint: string): Promise<T> {
-  // 🔧 MOCK MODE (temporary)
-  console.warn("API call mocked:", endpoint);
-  return Promise.reject("Mock mode enabled");
 }

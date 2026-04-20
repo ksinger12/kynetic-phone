@@ -1,25 +1,24 @@
-export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email?: string;
-  password: string;
-  clubs: {
-    clubId: number | null;
-    memberNumber: string;
-  }[];
+export type AuthRole = "ADMIN" | "CLUB_ADMIN" | "CLUB_USER";
+
+export interface UserClubSummary {
+  clubId: number;
+  clubName: string;
 }
 
 export interface LoginRequest {
-  identifier: string; // username or email
+  email: string;
   password: string;
 }
 
-export interface AuthResponse {
-  userId: string;
-  token: string;
-  clubs: {
-    clubId: string;
-    clubName: string;
-  }[];
+export interface AuthUser {
+  userId: number;
+  email: string;
+  roles: AuthRole[];
+  clubs: UserClubSummary[];
+  mustChangePassword: boolean;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
