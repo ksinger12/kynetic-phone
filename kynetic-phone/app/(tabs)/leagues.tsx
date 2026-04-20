@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, FlatList, StyleSheet, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchMyLeagues } from "@/api/league-api";
 import { fetchUserLeagueTeam } from "@/api/team-api";
 import { League } from "@/api/types/league";
+import {
+  beginNavigationLock,
+  canStartNavigation,
+} from "@/utils/navigation-lock";
 
 function LeagueCard({
   league,
@@ -49,41 +53,70 @@ function LeagueCard({
 
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<League[]>([]);
+  const navigationLockRef = useRef(false);
   const router = useRouter();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) return;
+  const loadLeagues = useCallback(() => {
+    if (!user) {
+      setLeagues([]);
+      return;
+    }
+
     fetchMyLeagues().then(setLeagues);
   }, [user]);
 
+  useEffect(() => {
+    loadLeagues();
+  }, [loadLeagues]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigationLockRef.current = false;
+      loadLeagues();
+    }, [loadLeagues])
+  );
+
   const handleLeaguePress = async (league: League) => {
-    if (!user) return;
+    if (!user || navigationLockRef.current || !canStartNavigation()) return;
 
-    const draftingAllowed =
-      (league.leagueStatus === "OPEN" || league.leagueStatus === "ACTIVE") &&
-      league.leagueSubStatus === "DRAFTING";
+    navigationLockRef.current = true;
+    beginNavigationLock();
 
-    if (draftingAllowed) {
-      const team = await fetchUserLeagueTeam(league.leagueId);
+    try {
+      const draftingAllowed =
+        (league.leagueStatus === "OPEN" || league.leagueStatus === "ACTIVE") &&
+        league.leagueSubStatus === "DRAFTING";
 
-      if (!team) {
-        router.push(`/teams/draft/${league.leagueId}/0`);
-        return;
+      if (draftingAllowed) {
+        const team = await fetchUserLeagueTeam(league.leagueId);
+
+        if (!team) {
+          router.navigate(`/teams/draft/${league.leagueId}/0`);
+          return;
+        }
       }
-    }
 
-    router.push({
-      pathname: "/leagues/[leagueId]",
-      params: { leagueId: league.leagueId.toString() },
-    });
+      router.navigate({
+        pathname: "/leagues/[leagueId]",
+        params: { leagueId: league.leagueId.toString() },
+      });
+    } catch (error) {
+      console.error("Failed to open league", error);
+      navigationLockRef.current = false;
+    }
   };
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
       <View style={styles.joinContainer}>
         <Pressable
-          onPress={() => router.push("/join-league")}
+          onPress={() => {
+            if (navigationLockRef.current || !canStartNavigation()) return;
+            navigationLockRef.current = true;
+            beginNavigationLock();
+            router.navigate("/join-league");
+          }}
           style={({ pressed }) => [
             styles.joinButton,
             pressed && { opacity: 0.9 },

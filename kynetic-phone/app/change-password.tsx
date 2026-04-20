@@ -1,7 +1,10 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -118,80 +121,96 @@ export default function ChangePasswordScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Change Password</Text>
-      <Text style={styles.subtitle}>
-        Your password must be changed before you can use the app.
-      </Text>
-      <Text style={styles.policy}>
-        Use at least 12 characters and include at least 1 digit.
-      </Text>
-
-      <TextInput
-        placeholder="Current Password"
-        secureTextEntry
-        value={currentPassword}
-        onChangeText={(value) => {
-          setCurrentPassword(value);
-          if (errorMessage) {
-            setErrorMessage(null);
-          }
-        }}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="New Password"
-        secureTextEntry
-        value={newPassword}
-        onChangeText={(value) => {
-          setNewPassword(value);
-          if (errorMessage) {
-            setErrorMessage(null);
-          }
-        }}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Confirm New Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={(value) => {
-          setConfirmPassword(value);
-          if (errorMessage) {
-            setErrorMessage(null);
-          }
-        }}
-        style={styles.input}
-      />
-
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-      <Pressable
-        style={[styles.primaryButton, submitting && styles.buttonDisabled]}
-        onPress={handleSubmit}
-        disabled={submitting || loggingOut}
+    <KeyboardAvoidingView
+      style={styles.keyboardContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.primaryButtonText}>
-          {submitting ? "Updating..." : "Update Password"}
-        </Text>
-      </Pressable>
+        <View style={styles.container}>
+          <Text style={styles.title}>Change Password</Text>
+          <Text style={styles.subtitle}>
+            Your password must be changed before you can use the app.
+          </Text>
+          <Text style={styles.policy}>
+            Use at least 12 characters and include at least 1 digit.
+          </Text>
 
-      <Pressable
-        style={[styles.secondaryButton, loggingOut && styles.buttonDisabled]}
-        onPress={handleLogout}
-        disabled={submitting || loggingOut}
-      >
-        <Text style={styles.secondaryButtonText}>
-          {loggingOut ? "Logging out..." : "Logout"}
-        </Text>
-      </Pressable>
-    </View>
+          <TextInput
+            placeholder="Current Password"
+            secureTextEntry
+            value={currentPassword}
+            onChangeText={(value) => {
+              setCurrentPassword(value);
+              if (errorMessage) {
+                setErrorMessage(null);
+              }
+            }}
+            style={styles.input}
+          />
+
+          <TextInput
+            placeholder="New Password"
+            secureTextEntry
+            value={newPassword}
+            onChangeText={(value) => {
+              setNewPassword(value);
+              if (errorMessage) {
+                setErrorMessage(null);
+              }
+            }}
+            style={styles.input}
+          />
+
+          <TextInput
+            placeholder="Confirm New Password"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={(value) => {
+              setConfirmPassword(value);
+              if (errorMessage) {
+                setErrorMessage(null);
+              }
+            }}
+            style={styles.input}
+          />
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+          <Pressable
+            style={[styles.primaryButton, submitting && styles.buttonDisabled]}
+            onPress={handleSubmit}
+            disabled={submitting || loggingOut}
+          >
+            <Text style={styles.primaryButtonText}>
+              {submitting ? "Updating..." : "Update Password"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.secondaryButton, loggingOut && styles.buttonDisabled]}
+            onPress={handleLogout}
+            disabled={submitting || loggingOut}
+          >
+            <Text style={styles.secondaryButtonText}>
+              {loggingOut ? "Logging out..." : "Logout"}
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     justifyContent: "center",

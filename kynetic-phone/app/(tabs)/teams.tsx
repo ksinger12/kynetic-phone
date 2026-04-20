@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, FlatList, StyleSheet, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchMyTeams } from "@/api/teams-api";
 import { UserTeam } from "@/api/types/userTeam";
+import {
+  beginNavigationLock,
+  canStartNavigation,
+} from "@/utils/navigation-lock";
 
 function TeamCard({
   team,
@@ -53,6 +57,7 @@ function TeamCard({
 
 export default function TeamsScreen() {
   const [teams, setTeams] = useState<UserTeam[]>([]);
+  const navigationLockRef = useRef(false);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -60,6 +65,12 @@ export default function TeamsScreen() {
     if (!user) return;
     fetchMyTeams().then(setTeams);
   }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigationLockRef.current = false;
+    }, [])
+  );
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
@@ -70,12 +81,15 @@ export default function TeamsScreen() {
         renderItem={({ item }) => (
           <TeamCard
             team={item}
-            onPress={() =>
-              router.push({
+            onPress={() => {
+              if (navigationLockRef.current || !canStartNavigation()) return;
+              navigationLockRef.current = true;
+              beginNavigationLock();
+              router.navigate({
                 pathname: "/teams/[teamId]",
                 params: { teamId: item.teamId.toString() },
-              })
-            }
+              });
+            }}
           />
         )}
       />

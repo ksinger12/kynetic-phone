@@ -20,11 +20,9 @@ type AuthContextType = {
     authStatus: AuthStatus;
     isAuthenticated: boolean;
     isBootstrapping: boolean;
-    activeClubId: string | null;
     login: (user: AuthUser) => void;
     logout: () => Promise<void>;
     refreshSession: () => Promise<void>;
-    setActiveClubId: (clubId: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +30,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [authStatus, setAuthStatus] = useState<AuthStatus>("bootstrapping");
-    const [activeClubId, setActiveClubId] = useState<string | null>(null);
 
     function applyUser(userData: AuthUser) {
         setUser(userData);
@@ -44,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     function clearSession() {
         setUser(null);
         setAuthStatus("unauthenticated");
-        setActiveClubId(null);
     }
 
     async function refreshSession() {
@@ -89,11 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     authStatus === "authenticated" ||
                     authStatus === "must_change_password",
                 isBootstrapping: authStatus === "bootstrapping",
-                activeClubId,
                 login,
                 logout,
                 refreshSession,
-                setActiveClubId,
             }}
         >
             {children}

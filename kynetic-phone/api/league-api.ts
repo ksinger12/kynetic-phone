@@ -8,6 +8,10 @@ export function fetchMyLeagues() {
   return get<League[]>("/api/me/leagues");
 }
 
+export function fetchLeaguesByStatus(clubId: string | number, status: string = "OPEN") {
+  return get<League[]>(`/api/club/${clubId}/status/${status}`);
+}
+
 export function fetchMyLeagueById(leagueId: string | number) {
     return get<League>(`/api/me/league/${leagueId}`)
 }
@@ -18,10 +22,6 @@ export function fetchLeagueRoundLeaderboard(leagueId: string) {
 
 export function fetchLeagueByLeagueId(leagueId: string | number) {
   return get<League>(`/api/league/${leagueId}`);
-}
-
-export function featchLeaguesByClubIdAndStatus(clubId: string | number, status: string) {
-  return get<League[]>(`/api/club/${clubId}/status/${status}`);
 }
 
 export function createTeamForLeague(leagueId: string | number, body: CreateTeam) {

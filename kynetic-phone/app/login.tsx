@@ -6,15 +6,21 @@ import {
     TextInput,
     Pressable,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { loginUser } from "@/api/auth-api";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/api/http-client";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function LoginScreen() {
     const router = useRouter();
     const { login, authStatus, isBootstrapping } = useAuth();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === "dark";
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -78,64 +84,100 @@ export default function LoginScreen() {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.welcome}>Welcome to</Text>
-            <Text style={styles.brand}>Kynetic</Text>
-
-            <Text style={styles.title}>Login</Text>
-
-            <TextInput
-                placeholder="Email"
-                value={email}
-                onChangeText={(value) => {
-                    setEmail(value);
-                    if (errorMessage) {
-                        setErrorMessage(null);
-                    }
-                }}
-                style={styles.input}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-            />
-
-            <TextInput
-                placeholder="Password"
-                secureTextEntry
-                value={password}
-                onChangeText={(value) => {
-                    setPassword(value);
-                    if (errorMessage) {
-                        setErrorMessage(null);
-                    }
-                }}
-                style={styles.input}
-            />
-
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-            <Pressable
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleLogin}
-                disabled={loading}
+        <KeyboardAvoidingView
+            style={styles.keyboardContainer}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
             >
-                <Text style={styles.buttonText}>
-                    {loading ? "Logging in..." : "Login"}
-                </Text>
-            </Pressable>
-        </View>
+                <View style={styles.container}>
+                    <View style={styles.header}>
+                        <Text style={styles.welcome}>Welcome to</Text>
+                        <Text style={styles.brand}>Kynetic</Text>
+                    </View>
+
+                    <Text style={[styles.title, isDark && styles.titleDark]}>Login</Text>
+
+                    <TextInput
+                        placeholder="Email"
+                        placeholderTextColor="#6b7280"
+                        value={email}
+                        onChangeText={(value) => {
+                            setEmail(value);
+                            if (errorMessage) {
+                                setErrorMessage(null);
+                            }
+                        }}
+                        style={styles.input}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        autoCorrect={false}
+                    />
+
+                    <TextInput
+                        placeholder="Password"
+                        placeholderTextColor="#6b7280"
+                        secureTextEntry
+                        value={password}
+                        onChangeText={(value) => {
+                            setPassword(value);
+                            if (errorMessage) {
+                                setErrorMessage(null);
+                            }
+                        }}
+                        style={styles.input}
+                    />
+
+                    {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+                    <Pressable
+                        style={[styles.button, loading && styles.buttonDisabled]}
+                        onPress={handleLogin}
+                        disabled={loading}
+                    >
+                        <Text style={styles.buttonText}>
+                            {loading ? "Logging in..." : "Login"}
+                        </Text>
+                    </Pressable>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 24, justifyContent: "center" },
+    keyboardContainer: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        padding: 24,
+    },
     centered: {
         alignItems: "center",
         flex: 1,
         justifyContent: "center",
         padding: 24,
     },
-    title: { fontSize: 24, fontWeight: "700", marginBottom: 24 },
+    header: {
+        alignItems: "center",
+        marginBottom: 24,
+    },
+    title: {
+        color: "#111827",
+        fontSize: 24,
+        fontWeight: "700",
+        marginBottom: 24,
+    },
+    titleDark: {
+        color: "#f9fafb",
+    },
     input: {
         backgroundColor: "#fff",
         color: "#000",
@@ -163,12 +205,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         opacity: 0.7,
         marginBottom: 4,
-        color: "#80d7faff"
+        color: "#80d7faff",
+        textAlign: "center",
     },
     brand: {
         fontSize: 28,
         fontWeight: "800",
         marginBottom: 24,
-        color: "#80d7faff"
+        color: "#80d7faff",
+        textAlign: "center",
     },
 });

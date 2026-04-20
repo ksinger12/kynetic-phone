@@ -70,7 +70,13 @@ function RootNavigator() {
           name="change-password"
           options={{ headerShown: true, title: "Change Password" }}
         />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+            title: "Menu",
+          }}
+        />
         <Stack.Screen
           name="join-league"
           options={{

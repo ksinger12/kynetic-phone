@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -12,6 +12,10 @@ import { fetchLeagueLeaderboard } from "@/api/team-api";
 import { League } from "@/api/types/league";
 import { RoundLeaderboard } from "@/api/types/roundLeaderboard";
 import { Team } from "@/api/types/team";
+import {
+    beginNavigationLock,
+    canStartNavigation,
+} from "@/utils/navigation-lock";
 
 export default function LeagueDetailScreen() {
 
@@ -22,8 +26,8 @@ export default function LeagueDetailScreen() {
     const [league, setLeague] = useState<League | null>(null);
     const [roundLeaderboard, setRoundLeaderboard] = useState<RoundLeaderboard | null>(null);
     const [leaderboard, setLeaderboard] = useState<Team[]>([]);
+    const navigationLockRef = useRef(false);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!leagueId) return;
@@ -44,7 +48,6 @@ export default function LeagueDetailScreen() {
             } catch (e) {
                 console.warn("Partial league load failed:", e);
                 // console.error("League load failed:", e);
-                // setError("Failed to load league data");
             } finally {
                 setLoading(false);
             }
@@ -58,6 +61,12 @@ export default function LeagueDetailScreen() {
             title: league?.leagueName ?? "League",
         });
     }, [navigation, league]);
+
+    useFocusEffect(
+        useCallback(() => {
+            navigationLockRef.current = false;
+        }, [])
+    );
 
 
     // ✅ Loading state (no blank screen anymore)
@@ -103,7 +112,12 @@ export default function LeagueDetailScreen() {
             <TouchableOpacity
                 style={[styles.card, !roundLeaderboard && styles.cardDisabled]}
                 disabled={!roundLeaderboard}
-                onPress={() => router.push(`/leagues/${leagueId}/round-leaderboard`)}
+                onPress={() => {
+                    if (navigationLockRef.current || !canStartNavigation()) return;
+                    navigationLockRef.current = true;
+                    beginNavigationLock();
+                    router.navigate(`/leagues/${leagueId}/round-leaderboard`);
+                }}
             >
                 <Text style={styles.cardTitle}>Weekly Game</Text>
                 <Text style={styles.cardValue}>
@@ -115,7 +129,12 @@ export default function LeagueDetailScreen() {
             {/* Leaderboard Card */}
             <TouchableOpacity
                 style={styles.card}
-                onPress={() => router.push(`/leagues/${leagueId}/leaderboard`)}
+                onPress={() => {
+                    if (navigationLockRef.current || !canStartNavigation()) return;
+                    navigationLockRef.current = true;
+                    beginNavigationLock();
+                    router.navigate(`/leagues/${leagueId}/leaderboard`);
+                }}
             >
                 <Text style={styles.cardTitle}>Leaderboard</Text>
                 <Text style={styles.cardValue}>
@@ -129,7 +148,12 @@ export default function LeagueDetailScreen() {
             {/* Teams Card */}
             <TouchableOpacity
                 style={styles.card}
-                onPress={() => router.push(`/leagues/${leagueId}/teams`)}
+                onPress={() => {
+                    if (navigationLockRef.current || !canStartNavigation()) return;
+                    navigationLockRef.current = true;
+                    beginNavigationLock();
+                    router.navigate(`/leagues/${leagueId}/teams`);
+                }}
             >
                 <Text style={styles.cardTitle}>Teams</Text>
                 <Text style={styles.cardValue}>
