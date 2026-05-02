@@ -1,3 +1,5 @@
+import { Player } from "./player";
+
 export type UserTeam = {
   teamId: number;
   leagueId: number;
@@ -7,4 +9,5 @@ export type UserTeam = {
   leagueName: string;
   points: number;
   rank: number;
+  players: Player[];
 };

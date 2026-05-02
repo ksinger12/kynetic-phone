@@ -22,14 +22,6 @@ if (Platform.OS === "android") { // what is this?
     UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
-type PlayerPerformance = {
-    id: number;
-    name: string;
-    rounds: number;
-    avgScore: number;
-    birdies: number;
-};
-
 export default function TeamDetailsScreen() {
     const { teamId } = useLocalSearchParams<{ teamId: string }>();
     const router = useRouter();
@@ -42,12 +34,6 @@ export default function TeamDetailsScreen() {
     const [league, setLeague] = useState<League | null>(null);
 
     const rotations = useRef<{ [key: number]: Animated.Value }>({}).current;
-
-    const players: PlayerPerformance[] = [
-        { id: 1, name: "Kyle S.", rounds: 12, avgScore: 78, birdies: 14 },
-        { id: 2, name: "Mark T.", rounds: 9, avgScore: 82, birdies: 8 },
-        { id: 3, name: "Chris L.", rounds: 15, avgScore: 76, birdies: 21 },
-    ];
 
     useEffect(() => {
         if (!teamId) return;
@@ -153,20 +139,20 @@ export default function TeamDetailsScreen() {
                             Players
                         </Text>
 
-                        {players.map((player) => {
-                            if (!rotations[player.id]) {
-                                rotations[player.id] = new Animated.Value(0);
+                        {team.players.map((player) => {
+                            if (!rotations[player.playerId]) {
+                                rotations[player.playerId] = new Animated.Value(0);
                             }
 
-                            const rotate = rotations[player.id].interpolate({
+                            const rotate = rotations[player.playerId].interpolate({
                                 inputRange: [0, 1],
                                 outputRange: ["0deg", "90deg"],
                             });
 
                             return (
-                                <View key={player.id}>
+                                <View key={player.playerId}>
                                     <Pressable
-                                        onPress={() => toggle(player.id)}
+                                        onPress={() => toggle(player.playerId)}
                                         style={styles.tableRow}
                                     >
                                         <Animated.Text
@@ -184,15 +170,15 @@ export default function TeamDetailsScreen() {
                                                 { color: textPrimary },
                                             ]}
                                         >
-                                            {player.name}
+                                            {player.firstName} {player.lastName}
                                         </Text>
 
-                                        <Text style={styles.statCell}>{player.rounds}</Text>
+                                        {/* <Text style={styles.statCell}>{player.rounds}</Text>
                                         <Text style={styles.statCell}>{player.avgScore}</Text>
-                                        <Text style={styles.statCell}>{player.birdies}</Text>
+                                        <Text style={styles.statCell}>{player.birdies}</Text> */}
                                     </Pressable>
 
-                                    {expanded === player.id && (
+                                    {expanded === player.playerId && (
                                         <View style={styles.expandedArea}>
                                             <Text style={styles.expandedText}>
                                                 More detailed stats coming soon...
