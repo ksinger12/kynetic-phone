@@ -24,7 +24,7 @@ export default function LeaderboardScreen() {
                 </Text>
             ) : (
                 teams.map((t) => (
-                    <Text key={t.id}>{t.teamName}</Text>
+                    <Text key={t.id}>{t.teamId}</Text> // TODO: add in teamName (need to update DTOP)
                 ))
             )}
         </View>

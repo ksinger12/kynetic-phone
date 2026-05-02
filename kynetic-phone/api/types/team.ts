@@ -1,8 +1,8 @@
 export interface Team {
   id: number;
-  leagueId: number;
+  clubId: number;
   userId: number;
-  teamName: string;
-  teamSlogan: string;
-  players: object[]; // just contains objects of player ids. Might evolve
+  teamId: number;
+  teamPosition: number;
+  teamPoint: number;
 }

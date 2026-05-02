@@ -25,7 +25,7 @@ export default function TeamsScreen() {
             ) : (
                 teams.map((t) => (
                     <Text key={t.id}>
-                        {t.teamName} — {t.teamSlogan}
+                        {t.id} {/* {t.teamName} — {t.teamSlogan} // TODO: implement */}
                     </Text>
                 ))
             )}
