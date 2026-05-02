@@ -5,7 +5,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchMyLeagues } from "@/api/league-api";
-import { fetchUserLeagueTeam } from "@/api/team-api";
+import { fetchTeamById } from "../../api/teams-api";
 import { League } from "@/api/types/league";
 import {
   beginNavigationLock,
@@ -89,9 +89,9 @@ export default function LeaguesScreen() {
         league.leagueSubStatus === "DRAFTING";
 
       if (draftingAllowed) {
-        const team = await fetchUserLeagueTeam(league.leagueId);
+        const userTeam = await fetchUserLeagueTeam(league.leagueId);
 
-        if (!team) {
+        if (userTeam.players.length == 0) {
           router.navigate(`/teams/draft/${league.leagueId}/0`);
           return;
         }

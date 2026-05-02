@@ -9,4 +9,5 @@ export interface League {
   roundCount: number;
   sportId: number;
   sportName: string;
+  teamId: number;
 }
