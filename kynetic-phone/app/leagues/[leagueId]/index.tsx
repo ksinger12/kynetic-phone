@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
+    ScrollView,
+    Pressable,
+} from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -8,10 +16,12 @@ import {
     fetchLeagueRoundLeaderboard,
 } from "@/api/league-api";
 import { fetchLeagueLeaderboard } from "@/api/team-api";
+import { fetchLeagueTeams } from "@/api/teams-api";
 
 import { League } from "@/api/types/league";
 import { RoundLeaderboard } from "@/api/types/roundLeaderboard";
 import { Team } from "@/api/types/team";
+import { UserTeam } from "@/api/types/userTeam";
 import {
     beginNavigationLock,
     canStartNavigation,
@@ -26,6 +36,7 @@ export default function LeagueDetailScreen() {
     const [league, setLeague] = useState<League | null>(null);
     const [roundLeaderboard, setRoundLeaderboard] = useState<RoundLeaderboard | null>(null);
     const [leaderboard, setLeaderboard] = useState<Team[]>([]);
+    const [teams, setTeams] = useState<UserTeam[]>([]);
     const navigationLockRef = useRef(false);
     const [loading, setLoading] = useState(true);
 
@@ -36,18 +47,19 @@ export default function LeagueDetailScreen() {
             try {
                 setLoading(true);
 
-                const [leagueRes, roundBoard, leaderboardRes] = await Promise.all([
+                const [leagueRes, roundBoard, leaderboardRes, teamsRes] = await Promise.all([
                     fetchMyLeagueById(leagueId),
                     fetchLeagueRoundLeaderboard(leagueId),
                     fetchLeagueLeaderboard(leagueId),
+                    fetchLeagueTeams(leagueId),
                 ]);
 
                 setLeague(leagueRes);
                 setRoundLeaderboard(roundBoard);
                 setLeaderboard(leaderboardRes);
+                setTeams(teamsRes);
             } catch (e) {
                 console.warn("Partial league load failed:", e);
-                // console.error("League load failed:", e);
             } finally {
                 setLoading(false);
             }
@@ -68,13 +80,11 @@ export default function LeagueDetailScreen() {
         }, [])
     );
 
-
-    // ✅ Loading state (no blank screen anymore)
     if (loading) {
         return (
             <SafeAreaView style={styles.center}>
                 <ActivityIndicator size="large" />
-                <Text style={{ marginTop: 8 }}>Loading league...</Text>
+                <Text style={styles.loadingText}>Loading league...</Text>
             </SafeAreaView>
         );
     }
@@ -87,96 +97,135 @@ export default function LeagueDetailScreen() {
         );
     }
 
-    // ✅ Error state
-    if (!league) {
-        return (
-            <SafeAreaView style={styles.center}>
-                <Text>League not found</Text>
-            </SafeAreaView>
-        );
-    }
-
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.title}>
-                    {league?.leagueName ?? "League"}
-                </Text>
-                <Text style={styles.subtitle}>
-                    {league?.clubName ?? " "}
-                </Text>
-            </View>
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView contentContainerStyle={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>
+                        {league.leagueName}
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        {league.clubName}
+                    </Text>
+                </View>
 
-            {/* Weekly Game Card */}
-            <TouchableOpacity
-                style={[styles.card, !roundLeaderboard && styles.cardDisabled]}
-                disabled={!roundLeaderboard}
-                onPress={() => {
-                    if (navigationLockRef.current || !canStartNavigation()) return;
-                    navigationLockRef.current = true;
-                    beginNavigationLock();
-                    router.navigate(`/leagues/${leagueId}/round-leaderboard`);
-                }}
-            >
-                <Text style={styles.cardTitle}>Weekly Game</Text>
-                <Text style={styles.cardValue}>
-                    {roundLeaderboard ? "View current round" : "No active game"}
-                </Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.card, !roundLeaderboard && styles.cardDisabled]}
+                    disabled={!roundLeaderboard}
+                    onPress={() => {
+                        if (navigationLockRef.current || !canStartNavigation()) return;
+                        navigationLockRef.current = true;
+                        beginNavigationLock();
+                        router.navigate(`/leagues/${leagueId}/round-leaderboard`);
+                    }}
+                >
+                    <Text style={styles.cardTitle}>Weekly Game</Text>
+                    <Text style={styles.cardValue}>
+                        {roundLeaderboard ? "View current round" : "No active game"}
+                    </Text>
+                </TouchableOpacity>
 
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => {
+                        if (navigationLockRef.current || !canStartNavigation()) return;
+                        navigationLockRef.current = true;
+                        beginNavigationLock();
+                        router.navigate(`/leagues/${leagueId}/leaderboard`);
+                    }}
+                >
+                    <Text style={styles.cardTitle}>Leaderboard</Text>
+                    <Text style={styles.cardValue}>
+                        {leaderboard.length > 0
+                            ? `${leaderboard.length} teams`
+                            : "No teams yet"}
+                    </Text>
+                </TouchableOpacity>
 
-            {/* Leaderboard Card */}
-            <TouchableOpacity
-                style={styles.card}
-                onPress={() => {
-                    if (navigationLockRef.current || !canStartNavigation()) return;
-                    navigationLockRef.current = true;
-                    beginNavigationLock();
-                    router.navigate(`/leagues/${leagueId}/leaderboard`);
-                }}
-            >
-                <Text style={styles.cardTitle}>Leaderboard</Text>
-                <Text style={styles.cardValue}>
-                    {leaderboard.length > 0
-                        ? `${leaderboard.length} teams`
-                        : "No teams yet"}
-                </Text>
-            </TouchableOpacity>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Teams</Text>
+                    <Text style={styles.sectionSubtitle}>
+                        {teams.length > 0 ? `${teams.length} teams` : "No teams created yet"}
+                    </Text>
+                </View>
 
+                {teams.length === 0 ? (
+                    <View style={styles.emptyStateCard}>
+                        <Text style={styles.emptyStateText}>
+                            Teams will show up here once they have been created.
+                        </Text>
+                    </View>
+                ) : (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.teamRow}
+                    >
+                        {teams.map((team) => (
+                            <Pressable
+                                key={team.teamId}
+                                style={styles.teamCard}
+                                onPress={() => {
+                                    if (navigationLockRef.current || !canStartNavigation()) return;
+                                    navigationLockRef.current = true;
+                                    beginNavigationLock();
+                                    router.push(`/teams/${team.teamId}`);
+                                }}
+                            >
+                                <Text style={styles.teamName}>
+                                    {team.teamName}
+                                </Text>
 
-            {/* Teams Card */}
-            <TouchableOpacity
-                style={styles.card}
-                onPress={() => {
-                    if (navigationLockRef.current || !canStartNavigation()) return;
-                    navigationLockRef.current = true;
-                    beginNavigationLock();
-                    router.navigate(`/leagues/${leagueId}/teams`);
-                }}
-            >
-                <Text style={styles.cardTitle}>Teams</Text>
-                <Text style={styles.cardValue}>
-                    {leaderboard.length > 0 ? "View teams" : "No teams created"}
-                </Text>
-            </TouchableOpacity>
+                                <Text style={styles.teamLeagueText}>
+                                    {team.players.length} players
+                                </Text>
 
+                                <View style={styles.teamMetaRow}>
+                                    <Text style={styles.teamBadge}>#{team.rank}</Text>
+                                    <Text style={styles.teamPoints}>{team.points} pts</Text>
+                                </View>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                )}
+            </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16 },
+    safeArea: {
+        flex: 1,
+    },
+
+    container: {
+        padding: 16,
+        paddingBottom: 24,
+    },
+
     center: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
     },
+
+    loadingText: {
+        marginTop: 8,
+    },
+
     header: {
         marginBottom: 20,
     },
-    title: { fontSize: 22, fontWeight: "700" },
-    subtitle: { fontSize: 14, color: "#666" },
+
+    title: {
+        fontSize: 22,
+        fontWeight: "700",
+    },
+
+    subtitle: {
+        fontSize: 14,
+        color: "#666",
+    },
 
     card: {
         backgroundColor: "#fff",
@@ -185,16 +234,96 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         elevation: 3,
     },
+
     cardTitle: {
         fontSize: 16,
         fontWeight: "600",
         marginBottom: 4,
     },
+
     cardValue: {
         fontSize: 13,
         color: "#555",
     },
+
     cardDisabled: {
         opacity: 0.6,
-    }
+    },
+
+    sectionHeader: {
+        marginTop: 8,
+        marginBottom: 12,
+    },
+
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#111",
+    },
+
+    sectionSubtitle: {
+        fontSize: 13,
+        color: "#666",
+        marginTop: 4,
+    },
+
+    emptyStateCard: {
+        backgroundColor: "#fff",
+        borderRadius: 14,
+        padding: 16,
+        elevation: 2,
+    },
+
+    emptyStateText: {
+        fontSize: 13,
+        color: "#666",
+    },
+
+    teamRow: {
+        paddingRight: 16,
+    },
+
+    teamCard: {
+        width: 220,
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        padding: 16,
+        marginRight: 12,
+        elevation: 3,
+    },
+
+    teamName: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#111",
+    },
+
+    teamLeagueText: {
+        fontSize: 13,
+        color: "#666",
+        marginTop: 6,
+    },
+
+    teamMetaRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 16,
+    },
+
+    teamBadge: {
+        backgroundColor: "#DBEAFE",
+        color: "#1D4ED8",
+        fontWeight: "700",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 999,
+        overflow: "hidden",
+    },
+
+    teamPoints: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#374151",
+    },
 });
