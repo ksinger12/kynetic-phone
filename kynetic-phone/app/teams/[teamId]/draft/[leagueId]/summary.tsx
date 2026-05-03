@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { fetchLeagueBrackets } from "@/api/league-api";
+import { addPlayersToTeam, fetchLeagueBrackets } from "@/api/league-api";
+import { DraftTeamPlayers } from "@/api/types/draftTeamPlayers";
 import { LeagueBracket } from "@/api/types/leagueBracket";
 import { useDraft } from "./_layout";
 
@@ -17,6 +18,7 @@ export default function DraftSummaryScreen() {
     const { selections } = useDraft();
 
     const [brackets, setBrackets] = useState<LeagueBracket[]>([]);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         fetchLeagueBrackets(leagueId as string).then(setBrackets);
@@ -24,21 +26,27 @@ export default function DraftSummaryScreen() {
 
     const submit = async () => {
 
-        const payload = Object.entries(selections).map(
-            ([bracketId, players]) => ({
-                bracketId,
-                playerIds: players
-            })
+        if (!leagueId || !teamId || submitting) return;
+
+        const playerIds = Object.values(selections).flatMap(
+            (players) => players as number[]
         );
 
-        console.log("Draft payload:", payload);
+        const payload: DraftTeamPlayers = {
+            playerIds,
+        };
 
-        /*
-        TODO:
-        call API endpoint to submit draft
-        */
+        try {
+            setSubmitting(true);
 
-        router.replace(`/leagues/${leagueId}`);
+            await addPlayersToTeam(leagueId, teamId, payload);
+
+            router.replace(`/leagues/${leagueId}`);
+        } catch (error) {
+            console.error("Failed to submit draft", error);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -82,8 +90,14 @@ export default function DraftSummaryScreen() {
                 );
             })}
 
-            <Pressable style={styles.submit} onPress={submit}>
-                <Text style={{ color: "#fff" }}>Submit Team</Text>
+            <Pressable
+                style={[styles.submit, submitting && styles.submitDisabled]}
+                onPress={submit}
+                disabled={submitting}
+            >
+                <Text style={styles.submitText}>
+                    {submitting ? "Submitting..." : "Submit Team"}
+                </Text>
             </Pressable>
 
         </View>
@@ -123,5 +137,13 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: "center",
         marginTop: 20
+    },
+
+    submitDisabled: {
+        opacity: 0.7,
+    },
+
+    submitText: {
+        color: "#fff",
     }
 });
