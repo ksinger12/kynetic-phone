@@ -1,5 +1,5 @@
 export interface Bracket {
     id: number,
-    name: string,
+    bracketName: string,
     playersToPick: number
 }

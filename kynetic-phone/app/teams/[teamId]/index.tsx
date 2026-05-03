@@ -53,7 +53,7 @@ export default function TeamDetailsScreen() {
         if (!league || !team) return;
 
         if (league.leagueStatus === "Open" && league.leagueSubStatus === "Drafting") {
-            router.replace(`/teams/${team.teamId}/draft`);
+            router.replace(`/teams/${team.teamId}/draft/${league.leagueId}/0`);
         }
 
     }, [league, team]);

@@ -14,7 +14,11 @@ import { BracketPlayer } from "@/api/types/bracketPlayer";
 import { useDraft } from "./_layout";
 
 export default function DraftBracketScreen() {
-    const { leagueId, bracketIndex } = useLocalSearchParams();
+    const { teamId, leagueId, bracketIndex } = useLocalSearchParams<{
+        teamId: string;
+        leagueId: string;
+        bracketIndex: string;
+    }>();
     const router = useRouter();
 
     const { selections, setSelections } = useDraft();
@@ -52,15 +56,15 @@ export default function DraftBracketScreen() {
 
     const goNext = () => {
         if (index + 1 < brackets.length) {
-            router.push(`/teams/draft/${leagueId}/${index + 1}`);
+            router.push(`/teams/${teamId}/draft/${leagueId}/${index + 1}`);
         } else {
-            router.push(`/teams/draft/${leagueId}/summary`);
+            router.push(`/teams/${teamId}/draft/${leagueId}/summary`);
         }
     };
 
     const goBack = () => {
         if (index === 0) return;
-        router.push(`/teams/draft/${leagueId}/${index - 1}`);
+        router.push(`/teams/${teamId}/draft/${leagueId}/${index - 1}`);
     };
 
     return (
@@ -71,36 +75,39 @@ export default function DraftBracketScreen() {
             </Text>
 
             {/* Bracket Navigation */}
-            <View style={styles.navRow}>
-                {brackets.map((b, i) => {
-                    const active = i === index;
+            <View style={styles.selectorCard}>
+                <Text style={styles.selectorTitle}>Jump to Bracket</Text>
+                <View style={styles.navRow}>
+                    {brackets.map((b, i) => {
+                        const active = i === index;
 
-                    return (
-                        <Pressable
-                            key={b.bracket.id}
-                            style={[
-                                styles.navItem,
-                                active && styles.navItemActive,
-                            ]}
-                            onPress={() =>
-                                router.push(`/teams/draft/${leagueId}/${i}`)
-                            }
-                        >
-                            <Text
+                        return (
+                            <Pressable
+                                key={b.bracket.id}
                                 style={[
-                                    styles.navText,
-                                    active && styles.navTextActive,
+                                    styles.navItem,
+                                    active && styles.navItemActive,
                                 ]}
+                                onPress={() =>
+                                    router.push(`/teams/${teamId}/draft/${leagueId}/${i}`)
+                                }
                             >
-                                {b.bracket.name[0]}
-                            </Text>
-                        </Pressable>
-                    );
-                })}
+                                <Text
+                                    style={[
+                                        styles.navText,
+                                        active && styles.navTextActive,
+                                    ]}
+                                >
+                                    {i + 1}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
             </View>
 
             {/* Bracket Title */}
-            <Text style={styles.title}>{bracket.bracket.name}</Text>
+            <Text style={styles.title}>{bracket.bracket.bracketName}</Text>
 
             {/* Pick Counter */}
             <Text style={styles.pickCount}>
@@ -172,15 +179,40 @@ const styles = StyleSheet.create({
 
     navRow: {
         flexDirection: "row",
+        marginTop: 10,
+        flexWrap: "wrap",
+        gap: 8,
+    },
+
+    selectorCard: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        padding: 12,
         marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        shadowColor: "#0F172A",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 2,
+    },
+
+    selectorTitle: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#6B7280",
+        letterSpacing: 0.3,
+        textTransform: "uppercase",
     },
 
     navItem: {
-        backgroundColor: "#E5E7EB",
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        marginRight: 6,
+        width: 38,
+        height: 38,
+        backgroundColor: "#F3F4F6",
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
     },
 
     navItemActive: {
@@ -188,7 +220,8 @@ const styles = StyleSheet.create({
     },
 
     navText: {
-        fontWeight: "600",
+        fontWeight: "700",
+        color: "#374151",
     },
 
     navTextActive: {

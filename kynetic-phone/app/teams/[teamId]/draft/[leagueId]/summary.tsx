@@ -8,7 +8,10 @@ import { useDraft } from "./_layout";
 
 export default function DraftSummaryScreen() {
 
-    const { leagueId } = useLocalSearchParams();
+    const { teamId, leagueId } = useLocalSearchParams<{
+        teamId: string;
+        leagueId: string;
+    }>();
     const router = useRouter();
 
     const { selections } = useDraft();
@@ -51,7 +54,7 @@ export default function DraftSummaryScreen() {
                     <View key={b.bracket.id} style={styles.card}>
 
                         <Text style={styles.bracket}>
-                            {b.bracket.name}
+                            {b.bracket.bracketName}
                         </Text>
 
                         {picks.map((playerId: number) => {
@@ -69,7 +72,7 @@ export default function DraftSummaryScreen() {
 
                         <Pressable
                             onPress={() =>
-                                router.push(`/teams/draft/${leagueId}/${index}`)
+                                router.push(`/teams/${teamId}/draft/${leagueId}/${index}`)
                             }
                         >
                             <Text style={styles.edit}>Edit</Text>

@@ -17,7 +17,11 @@ export default function DraftLayout() {
 
     return (
         <DraftContext.Provider value={{ selections, setSelections }}>
-            <Stack />
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                }}
+            />
         </DraftContext.Provider>
     );
 }

@@ -89,10 +89,10 @@ export default function LeaguesScreen() {
         league.leagueSubStatus === "DRAFTING";
 
       if (draftingAllowed) {
-        const userTeam = await fetchUserLeagueTeam(league.leagueId);
+        const userTeam = await fetchTeamById(league.teamId);
 
         if (userTeam.players.length == 0) {
-          router.navigate(`/teams/draft/${league.leagueId}/0`);
+          router.navigate(`/teams/${league.teamId}/draft/${league.leagueId}/0`);
           return;
         }
       }
