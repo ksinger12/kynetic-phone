@@ -8,3 +8,7 @@ export async function fetchTeamById(teamId: string | number) {
 export async function fetchMyTeams() {
     return get<UserTeam[]>("/api/me/teams")
 }
+
+export async function fetchLeagueTeams(leagueId: string | number) {
+    return get<UserTeam[]>(`/api/league/${leagueId}/teams`)
+}
